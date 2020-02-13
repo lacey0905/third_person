@@ -22,32 +22,71 @@ public class PlayerController : MonoBehaviour
         anim = model.GetComponent<Animator>();
     }
 
+    public VariableJoystick variableJoystick;
 
     private void FixedUpdate()
     {
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
+        Vector3 direction = Vector3.forward * variableJoystick.Vertical + Vector3.right * variableJoystick.Horizontal;
+        //rigidbody.AddForce(direction * fSpeed * Time.fixedDeltaTime, ForceMode.VelocityChange);
 
-        movement.Set(h, 0, v);
-        movement = movement.normalized * fSpeed * Time.deltaTime;
+        direction = direction * fSpeed * Time.fixedDeltaTime;
 
-        rigidbody.MovePosition(transform.position + movement);
+        rigidbody.MovePosition(transform.position + direction);
 
-
-        if(h == 0 && v == 0)
+        if(direction.x == 0f && direction.z == 0f)
         {
             anim.SetBool("Run", false);
+            CameraConroller.instance.ResetMoving();
         }
         else
         {
-
+            CameraConroller.instance.CameraMoving();
             anim.SetBool("Run", true);
-
-            Quaternion newRot = Quaternion.LookRotation(movement);
+            Quaternion newRot = Quaternion.LookRotation(direction);
             rigidbody.rotation = Quaternion.Slerp(rigidbody.rotation, newRot, fRotSpeed * Time.deltaTime);
+        }
+       
+
+        Collider[] colls = Physics.OverlapSphere(transform.position, radius, 1 << 2);
+
+        ArrayList distanceArr = new ArrayList();
+
+        float distance = 0f;
+
+        for(int i=0; i<colls.Length; i++)
+        {
+            float newDis = Vector3.Distance(colls[i].transform.position, transform.position);
+
+            if(newDis < distance || distance <= 0f)
+            {
+                distance = newDis;
+                currentTarget = colls[i].gameObject;
+                //Debug.Log(currentTarget);
+            }
+        }
+
+        if(colls.Length <= 0)
+        {
+            currentTarget = null;
         }
 
     }
 
+    GameObject currentTarget;
 
+
+    float radius = 5f;
+
+    void OnDrawGizmos()
+    {
+        // Draw a yellow sphere at the transform's position
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, radius);
+
+        if(currentTarget != null)
+        {
+            Gizmos.DrawLine(transform.position, currentTarget.transform.position);
+        }
+
+    }
 }
