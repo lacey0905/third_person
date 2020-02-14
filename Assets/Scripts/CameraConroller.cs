@@ -36,4 +36,3 @@ public class CameraConroller : MonoBehaviour
         moving.transform.position = Vector3.Lerp(moving.transform.position, transform.position, Time.deltaTime * movingSpeed);
     }
 }
-1
